@@ -90,6 +90,11 @@ escapes, ASCII escapes, and a few other standard ones.
     return final, literals
 
 def add_close_parens(code):
+    """
+This is a feature while allows one to strip a fair amount of bytes off their
+program. Any closing parentheses at the end of the program can be omitted. This
+function adds them back in for parsing purposes.
+    """
     return code + ')'*(code.count('(') -  code.count(')'))
 
 def tokenize(code):
