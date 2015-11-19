@@ -1,5 +1,5 @@
-# Arcyou's parsing library. Handles comment removal, string literals, and
-# abstract syntax tree creation.
+# Arcyou's parsing library. Handles comment removal, string literals, omitted
+# close-parens, and abstract syntax tree creation.
 
 import errors
 from re import sub, MULTILINE
@@ -21,14 +21,15 @@ externally. It applies all of the above functions in sequence to some raw
 code that it is passed.
     """
     old_rl = getrecursionlimit()
-    setrecursionlimit(code.count('(') + 20) # This should be comfortable
+    setrecursionlimit(code.count('(') + 50) # This should be comfortable
     stage1 = remove_comments(code)
     stage2, literals = extract_string_literals(stage1)
-    stage3 = tokenize(stage2)
-    stage4 = clean(stage3)
-    stage5 = insert_string_literals(stage4, literals)
+    stage3 = add_close_parens(stage2)
+    stage4 = tokenize(stage3)
+    stage5 = clean(stage4)
+    stage6 = insert_string_literals(stage5, literals)
     setrecursionlimit(old_rl)
-    return stage5
+    return stage6
 
 def remove_comments(code):
     """
@@ -36,7 +37,7 @@ Remove all comments from a program.
     """
     return sub(r";.*$", '', code, flags=MULTILINE)
 
-def handle_string_literals(code):
+def extract_string_literals(code):
     """
 Deal with string literals inside an Arcyou program. Also handles Unicode
 escapes, ASCII escapes, and a few other standard ones.
@@ -87,6 +88,9 @@ escapes, ASCII escapes, and a few other standard ones.
                 final += char
         pointer += 1
     return final, literals
+
+def add_close_parens(code):
+    return code + ')'*(code.count('(') -  code.count(')'))
 
 def tokenize(code):
     """
