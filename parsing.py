@@ -1,7 +1,8 @@
 # Arcyou's parsing library. Handles comment removal, string literals, omitted
 # close-parens, and abstract syntax tree creation.
 
-import errors
+# UNCOMMENT THE FOLLOWING LINE WHEN ERRORS IS FINISHED
+#from errors import ArcError
 from re import sub, MULTILINE
 from sys import getrecursionlimit, setrecursionlimit
 
@@ -13,6 +14,8 @@ ESCAPES = {'n': '\n',
            'f': '\f',
            'r': '\r'}
 
+# DELETE THE FOLLOWING LINE WHEN ERRORS IS FINISHED
+ArcError = print
 
 def parse(code):
     """
@@ -35,7 +38,7 @@ def remove_comments(code):
     """
 Remove all comments from a program.
     """
-    return sub(r";.*$", '', code, flags=MULTILINE)
+    return sub(r";.*$", '', code, flags=MULTILINE).replace('\n', '')
 
 def extract_string_literals(code):
     """
@@ -91,7 +94,7 @@ escapes, ASCII escapes, and a few other standard ones.
 
 def add_close_parens(code):
     """
-This is a feature while allows one to strip a fair amount of bytes off their
+This is a feature which allows one to strip a fair amount of bytes off their
 program. Any closing parentheses at the end of the program can be omitted. This
 function adds them back in for parsing purposes.
     """
@@ -132,10 +135,7 @@ tokenize("(eq (+ x 1) y)") -> ['eq',('+','x',1),'y']
     code = icode[:]
     i = 0
     temp = ""
-    print('\n',code)
-    print(len(code))
     while i< len(code):
-        print(i)
         item = code[i]
         if isinstance(item, str):
             if item == ' ':
@@ -166,8 +166,9 @@ def insert_string_literals(icode, literals):
     i = 0
     while i < len(code):
         item = code[i]
-        if isinstance(item, str) and str.startswith('\x02'):
+        if isinstance(item, str) and item.startswith('\x02'):
             code[i] = '"' + literals[ord(item[1])] + '"'
         elif isinstance(item, list):
             code[i] = insert_string_literals(item, literals)
         i += 1
+    return code
