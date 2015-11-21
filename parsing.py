@@ -151,6 +151,10 @@ tokenize("(eq (+ x 1) y)") -> ['eq',('+','x',1),'y']
                 temp += code.pop(i)
                 i -= 1
         else: # it's a list
+            if temp != "":
+                code.insert(i, temp)
+                temp = ""
+                i += 1
             code[i] = clean(item[:])
         i += 1
     if temp != "":

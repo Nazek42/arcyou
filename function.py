@@ -43,7 +43,10 @@ Arcyou's eval function.
     elif func in ('while', '@'):
         return ArcWhile(*args)
     elif func in ('for', 'f'):
-        return ArcFor(*args)
+        symbol = args[0]
+        iterator = ArcEval(args[1])
+        body = args[2]
+        return ArcFor(symbol, iterator, body)
     elif func in ('quote', '\''):
         return args
     elif func in ('set', ':'):
@@ -90,6 +93,7 @@ def ArcWhile(cond, body):
     result = []
     while ArcEval(cond):
         result.append(ArcEval(body))
+    return result
 
 def _add(*args):
     if len(args) == 1:
