@@ -2,7 +2,7 @@
 # close-parens, and abstract syntax tree creation.
 
 # UNCOMMENT THE FOLLOWING LINE WHEN ERRORS IS FINISHED
-#from errors import ArcError
+#from error import ArcError
 from re import sub, MULTILINE
 from sys import getrecursionlimit, setrecursionlimit
 
@@ -14,13 +14,10 @@ ESCAPES = {'n': '\n',
            'f': '\f',
            'r': '\r'}
 
-# DELETE THE FOLLOWING LINE WHEN ERRORS IS FINISHED
-ArcError = print
-
 def parse(code):
     """
 The top-level function for this library, the only one that should be called
-externally. It applies all of the above functions in sequence to some raw
+externally. It applies all of the below functions in sequence to some raw
 code that it is passed.
     """
     old_rl = getrecursionlimit()
@@ -30,9 +27,10 @@ code that it is passed.
     stage3 = add_close_parens(stage2)
     stage4 = tokenize(stage3)
     stage5 = clean(stage4)
-    stage6 = insert_string_literals(stage5, literals)
+    stage6 = convints(stage5)
+    stage7 = insert_string_literals(stage6, literals)
     setrecursionlimit(old_rl)
-    return stage6
+    return stage7
 
 def remove_comments(code):
     """
@@ -80,6 +78,8 @@ escapes, ASCII escapes, and a few other standard ones.
                         final += '\x02' + chr(index)
                     else:
                         errors.ArcError('strmax')
+                    index += 1
+                    temp = ""
                 in_string = False
 
             else:
@@ -90,6 +90,8 @@ escapes, ASCII escapes, and a few other standard ones.
             else:
                 final += char
         pointer += 1
+    if in_string:
+        ArcError('missing-"')
     return final, literals
 
 def add_close_parens(code):
@@ -140,13 +142,7 @@ tokenize("(eq (+ x 1) y)") -> ['eq',('+','x',1),'y']
         if isinstance(item, str):
             if item == ' ':
                 if temp != "":
-                    try:
-                        code[i] = int(temp)
-                    except ValueError:
-                        try:
-                            code[i] = float(temp)
-                        except ValueError:
-                            code[i] = temp
+                    code[i] = temp
                     temp = ""
                 else:
                     code.pop(i)
@@ -161,7 +157,26 @@ tokenize("(eq (+ x 1) y)") -> ['eq',('+','x',1),'y']
         code.append(temp)
     return code
 
+def convints(icode):
+    """
+Trawl the AST looking for valid numbers. If it finds any, it converts them.
+    """
+    code = []
+    for item in icode:
+        if isinstance(item, list):
+            code.append(convints(item))
+        elif is_valid_int(item):
+            code.append(int(item))
+        elif is_valid_float(item):
+            code.append(float(item))
+        else:
+            code.append(item)
+    return(code)
+
 def insert_string_literals(icode, literals):
+    """
+Re-insert the string literals into the AST.
+    """
     code = icode[:]
     i = 0
     while i < len(code):
@@ -172,3 +187,17 @@ def insert_string_literals(icode, literals):
             code[i] = insert_string_literals(item, literals)
         i += 1
     return code
+
+def is_valid_int(thing):
+    try:
+        int(thing)
+        return True
+    except ValueError:
+        return False
+
+def is_valid_float(thing):
+    try:
+        float(thing)
+        return True
+    except ValueError:
+        return False
