@@ -100,7 +100,7 @@ This is a feature which allows one to strip a fair amount of bytes off their
 program. Any closing parentheses at the end of the program can be omitted. This
 function adds them back in for parsing purposes.
     """
-    return code + ')'*(code.count('(') -  code.count(')'))
+    return code + ')' * (code.count('(')-code.count(')'))
 
 def tokenize(code):
     """
