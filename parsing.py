@@ -53,7 +53,7 @@ def remove_comments(code):
 Remove all comments from a program.
     """
     no_comments = sub(r";.*$", '', code, flags=MULTILINE)
-    return sub(r" {2,}", ' ', no_comments.replace('\n', ''))
+    return sub(r" {2,}", ' ', no_comments.replace('\n', ' '))
 
 def extract_string_literals(code):
     """
@@ -88,7 +88,7 @@ escapes, ASCII escapes, and a few other standard ones.
                     pointer += 1
             elif char == '\"':
                 if temp in literals:
-                        final += '\x02' + chr(literals.index(temp))
+                        final += ' \x02' + chr(literals.index(temp)) + ' '
                 else:
                     literals.append(temp)
                     if index <= 0xFFFF:

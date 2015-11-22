@@ -191,6 +191,9 @@ def _add(*args):
     else:
         return sum(args)
 
+def _mul(x, y):
+    return x * y
+
 def _print(*iargs):
     args = []
     for arg in iargs:
@@ -274,7 +277,8 @@ ArcBuiltins = {'+': _add,
                't': True,
                'f': False,
                'q': _read,
-               '=': _eq}
+               '=': _eq,
+               '*': _mul}
             #    'add': lambda *a: _add,
             #    '-': lambda x,y: _sub,
             #    'sub': lambda x,y: _sub,
