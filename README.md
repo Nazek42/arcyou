@@ -29,7 +29,7 @@ If the first atom is anything else, the cell is a function call.
 Function calls are of the form `(func arg1 arg2 arg3 ...)`. Where most languages would have built-in operators for things like addition and subtraction, Arcyóu has built-in functions. For example:
 
     (+ 1 2) --> 3
-    (/ 2 3) --> 0.666666666666
+    (= 2 3) --> False
     (_ 2 5) --> [2, 3, 4]
     (* 5 4 3 2) --> 120
 
