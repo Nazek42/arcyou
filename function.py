@@ -3,6 +3,7 @@
 from types import FunctionType
 from error import *
 from collections import Hashable
+import sys
 
 class ArcFunction:
     def __init__(self, params, body):
@@ -24,8 +25,10 @@ def ArcEval(cons):
     global ArcNamespace
 #    print("cons:", cons)
     # Is it an atom?
-    if is_num(cons) or is_string_literal(cons):
+    if is_num(cons):
         return cons
+    if is_string_literal(cons):
+        return cons[1:-1]
     if isinstance(cons, Hashable):
         if cons in ArcNamespace:
             return ArcNamespace[cons]
@@ -230,6 +233,17 @@ def _line(prompt=""):
 def _int(n):
     return int(n)
 
+def _read():
+    raw = sys.stdin.read()
+    if raw[-1] == '\n':
+        final = raw[:-1]
+    else:
+        final = raw
+    return final
+
+def _eq(x, y):
+    return x == y
+
 
 ArcBuiltins = {'+': _add,
                'p': _print,
@@ -241,7 +255,9 @@ ArcBuiltins = {'+': _add,
                'l': _line,
                '#': _int,
                't': True,
-               'f': False}
+               'f': False,
+               'q': _read,
+               '=': _eq}
             #    'add': lambda *a: _add,
             #    '-': lambda x,y: _sub,
             #    'sub': lambda x,y: _sub,

@@ -1,7 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding=utf8 -*-
+
 import sys
 import os.path
 import parsing
 import function
+
+usage = "Usage: arcyou path/to/source/code"
 
 def main():
     if len(sys.argv) > 1:
