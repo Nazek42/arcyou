@@ -2,90 +2,144 @@
 
 from types import FunctionType
 from error import *
-
-ArcBuiltins = {}
-ArcNamespace = {}
+from collections import Hashable
 
 class ArcFunction:
     def __init__(self, params, body):
         self.params = params[:]
         self.body = body[:]
-    def __call__(self, args):
-        print("Hello from funcx.__call__:",args)
+    def __call__(self, *args):
         global ArcNamespace
-        for param, arg in zip(self.params, map(ArcEval,args)):
-            print(param,arg)
+        #print("ArcFunction's args:", args)
+        for param, arg in zip(self.params, args):
             ArcNamespace[param] = arg
         ArcNamespace['$'] = self
         result = ArcEval(self.body)
-        print("ArcNamespace:",ArcNamespace)
         for param in self.params:
             ArcNamespace.pop(param)
         ArcNamespace.pop('$')
         return result
 
 def ArcEval(cons):
-    """
-Arcyou's eval function.
-    """
-    print("cons:",cons)
     global ArcNamespace
-    if isinstance(cons, str):
-        if cons.startswith('"') and cons.endswith('"'):
-            return cons
-        else:
-            return ArcNamespace[cons]
-    if not isinstance(cons, list):
+#    print("cons:", cons)
+    # Is it an atom?
+    if is_num(cons) or is_string_literal(cons):
         return cons
-    if cons == []:
-        return []
+    if isinstance(cons, Hashable):
+        if cons in ArcNamespace:
+            return ArcNamespace[cons]
+        else:
+            return cons
+    # Is it a special form?
+#    print("Hello from special form handler")
     func = cons[0]
-    args = cons[1:]
-    if func in ('if', '?'):
-        cond = ArcEval(args[0])
-        return ArcIf(cond, *args[1:])
-    elif func in ('while', '@'):
-        return ArcWhile(*args)
-    elif func in ('for', 'f'):
-        symbol = args[0]
-        iterator = ArcEval(args[1])
-        body = args[2]
-        return ArcFor(symbol, iterator, body)
-    elif func in ('quote', '\''):
-        if len(args) == 1:
-            return ArcEval(args[0])
-        else:
-            return args
-    elif func in ('set', ':'):
-        symbol = args[0]
-        value = ArcEval(args[1])
-        ArcNamespace[symbol] = value
+    # If
+    if func == '?':
+        cond = ArcEval(cons[1])
+        return ArcIf(cond, *cons[2:4])
+    # While
+    if func == '@':
+        return ArcWhile(*cons[1:3])
+    # For
+    if func == 'f':
+        iterator = ArcEval(cons[2])
+        return ArcFor(cons[1], iterator, cons[3])
+    # Function
+    if func == 'F':
+        return ArcFunction(cons[1], cons[2])
+    # Set
+    if func == ':':
+        value = ArcEval(cons[2])
+        ArcNamespace[cons[1]] = value
         return value
-    elif func in ('lambda', 'F'):
-        print("Hello from lambda handler")
-        params = args[0]
-        body = args[1]
-        return ArcFunction(params, body)
-    elif isinstance(func, list):
-        funcx = ArcEval(func)
-        if isinstance(funcx, ArcFunction):
-            print(func)
-            return funcx(args)
-        else:
-            return funcx
-    elif func in ArcNamespace.keys():
-        funcx = ArcNamespace[func]
-        print("args:",args)
-        resolved_args = list(map(ArcEval, args))
-        print("resolved_args:",resolved_args)
-        if isinstance(funcx, ArcFunction):
-            return funcx.execute(resolved_args)
-        elif isinstance(funcx, FunctionType):
-            return funcx(*resolved_args)
-        else:
-            ArcError('expected-function')
+    # Quote
+    if func == '\'':
+        return cons[1:]
+
+    # Not an atom or a special form?
+    # It must be a function call!
+    # Resolve *everything*. This will get already-defined functions as well.
+#    print("Hello from function handler")
+    consr = [ArcEval(thing) for thing in cons]
+    arguments = consr[1:]
+    #print("arguments:", arguments)
+    if arguments != []:
+        result = consr[0](*arguments)
     else:
-        print("Here:", func)
+        result = consr[0]()
+    #print("result:", result)
+    return result
+
+def is_num(thing):
+    if isinstance(thing, (int, float)):
+        return True
+    else:
+        return False
+
+def is_string_literal(thing):
+    if isinstance(thing, str):
+        if thing.startswith('"') and thing.endswith('"'):
+            return True
+        else:
+            return False
+    return False
+
+# def ArcEval_old(cons):
+#     """
+# Arcyou's eval function.
+#     """
+#     global ArcNamespace
+#     if isinstance(cons, str):
+#         if cons.startswith('"') and cons.endswith('"'):
+#             return cons
+#         else:
+#             return ArcNamespace[cons]
+#     if not isinstance(cons, list):
+#         return cons
+#     if cons == []:
+#         return []
+#     func = cons[0]
+#     args = cons[1:]
+#     if func in ('if', '?'):
+#         cond = ArcEval(args[0])
+#         return ArcIf(cond, *args[1:])
+#     elif func in ('while', '@'):
+#         return ArcWhile(*args)
+#     elif func in ('for', 'f'):
+#         symbol = args[0]
+#         iterator = ArcEval(args[1])
+#         body = args[2]
+#         return ArcFor(symbol, iterator, body)
+#     elif func in ('quote', '\''):
+#         if len(args) == 1:
+#             return ArcEval(args[0])
+#         else:
+#             return args
+#     elif func in ('set', ':'):
+#         symbol = args[0]
+#         value = ArcEval(args[1])
+#         ArcNamespace[symbol] = value
+#         return value
+#     elif func in ('lambda', 'F'):
+#         params = args[0]
+#         body = args[1]
+#         return ArcFunction(params, body)
+#     elif isinstance(func, list):
+#         funcx = ArcEval(func)
+#         if isinstance(funcx, ArcFunction):
+#             return funcx(args)
+#         else:
+#             return funcx
+#     elif func in ArcNamespace.keys():
+#         funcx = ArcNamespace[func]
+#         resolved_args = list(map(ArcEval, args))
+#         if isinstance(funcx, ArcFunction):
+#             return funcx.execute(resolved_args)
+#         elif isinstance(funcx, FunctionType):
+#             return funcx(*resolved_args)
+#         else:
+#             ArcError('expected-function')
 
 def ArcIf(cond, iftrue, iffalse):
     if cond:
@@ -94,7 +148,6 @@ def ArcIf(cond, iftrue, iffalse):
         return ArcEval(iffalse)
 
 def ArcFor(symbol, iterator, body):
-    print("Hello from for")
     global ArcNamespace
     result = []
     for item in iterator:
@@ -130,7 +183,6 @@ def _print(*iargs):
     return ""
 
 def _percent(x, y):
-    print("Hello from percent")
     if isinstance(x, (int, float)) and isinstance(y, (int, float)):
         return x % y
     elif isinstance(x, str) and isinstance(y, list):
@@ -138,22 +190,21 @@ def _percent(x, y):
     elif isinstance(x, (ArcFunction, FunctionType)) and isinstance(y, list):
         return list(map(x, y))
     else:
-        ArcError('value-error')
+        ArcError('value')
 
 def _inc(n):
     if isinstance(n, (int, float)):
         return n + 1
     else:
-        ArcError('value-error')
+        ArcError('value')
 
 def _dec(n):
     if isinstance(n, (int, float)):
         return n - 1
     else:
-        ArcError('value-error')
+        ArcError('value')
 
 def _range(*args):
-    print("Hello from range")
     if len(args) == 1:
         start = 0
         stop = ArcEval(args[0])
@@ -165,11 +216,9 @@ def _range(*args):
         start, stop, step = args
     else:
         ArcError('arguments')
-    print("SSS:",start, stop, step)
     return list(range(start, stop, step))
 
 def _and(*args):
-    print("Hello from and")
     if len(args) == 1:
         return all(args[0])
     else:
@@ -190,7 +239,9 @@ ArcBuiltins = {'+': _add,
                '_': _range,
                '&': _and,
                'l': _line,
-               '#': _int}
+               '#': _int,
+               't': True,
+               'f': False}
             #    'add': lambda *a: _add,
             #    '-': lambda x,y: _sub,
             #    'sub': lambda x,y: _sub,

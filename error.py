@@ -8,7 +8,9 @@ ERRORS = {'strmax': "Too many string literals are in the program. The maximum is
           'missing-(': "An opening parenthesis is missing from the program.",
           'badtype': "A function received arguments of the wrong type.",
           'missing-"': "A double-quoted string (\"...\") was not ended correctly.",
-          'expected-function': "A cons cell was not begun with a function."}
+          'expected-function': "A cons cell was not begun with a function.",
+          'value': "A function did not receive the right type of arguments.",
+          'arguments': "A function did not receive the right number of arguments."}
 
 class ArcError:
     def __init__(self, shortmsg):

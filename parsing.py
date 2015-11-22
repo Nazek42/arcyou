@@ -36,7 +36,8 @@ def remove_comments(code):
     """
 Remove all comments from a program.
     """
-    return sub(r";.*$", '', code, flags=MULTILINE).replace('\n', '')
+    no_comments = sub(r";.*$", '', code, flags=MULTILINE)
+    return sub(r" {2,}", ' ', no_comments.replace('\n', ''))
 
 def extract_string_literals(code):
     """

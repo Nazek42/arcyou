@@ -13,8 +13,6 @@ def main():
         code_raw = file.read()
 
     code = parsing.parse(code_raw)
-    if len(code) == 1:
-        code = [code]
     for cons in code:
         final = function.ArcEval(cons)
     print(final)
