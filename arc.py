@@ -24,6 +24,7 @@ import sys
 import os.path
 import parsing
 import function
+from cmd import Cmd
 
 def main():
     if len(sys.argv) > 1:
@@ -39,24 +40,32 @@ def main():
     print(final)
 
 def repl():
-    n = 0
-    function.ArcNamespace['bye'] = lambda: sys.exit(print("Bye."))
-    print(replinit)
+    function.ArcNamespace['bye'] = lambda: print("Bye.")
     try:
-        while True:
-            prompt = "(油%d)> " % n
-            print(function.ArcEval(parsing.parse(input(prompt))[0]))
-            n += 1
+        ArcRepl().cmdloop()
+        sys.exit()
     except EOFError:
-        function.ArcNamespace['bye']()
+        print("Bye.")
+        sys.exit()
 
-replinit = """Arcyóu version {0}. Copyright (C) 2015 Benjamin Kulas.
-This program comes with ABSOLUTELY NO WARRANTY; for details see the source code
-or the GNU General Public License version 3.
+class ArcRepl(Cmd):
+    intro = """Arcyóu version {0}. Copyright (C) 2015 Benjamin Kulas.
+This program comes with ABSOLUTELY NO WARRANTY; for details see the source code or the GNU General Public License version 3.
 
-Type (bye) or press Ctrl-D to exit.
-""".format(VERSION)
-
+Type (bye) to exit.
+    """.format(VERSION)
+    use_rawinput = False
+    prompt = "(油:0)> "
+    fprompt = "(油:%d)> "
+    n = 0
+    def precmd(self, line):
+        return parsing.parse(line)[0]
+    def onecmd(self, cons):
+        return print(function.ArcEval(cons))
+    def postcmd(self, stop, cons):
+        self.n += 1
+        self.prompt = self.fprompt % self.n
+        return cons == ['bye']
 
 
 main()
