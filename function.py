@@ -21,8 +21,12 @@ from types import FunctionType
 from error import *
 from collections import Hashable
 import sys
+import parsing
 
 class ArcFunction:
+    """
+A function in live code is represented by this.
+    """
     def __init__(self, params, body):
         self.params = params[:]
         self.body = body[:]
@@ -31,7 +35,8 @@ class ArcFunction:
         #print("ArcFunction's args:", args)
         for param, arg in zip(self.params, args):
             ArcNamespace[param] = arg
-        ArcNamespace['$'] = self
+        # Fixpoint
+        ArcNamespace['$'] = ArcFunction(self.params, self.body)
         result = ArcEval(self.body)
         for param in self.params:
             ArcNamespace.pop(param)
@@ -39,6 +44,13 @@ class ArcFunction:
         return result
 
 def ArcEval(cons):
+    """
+The core of Arcyou, a work of intricate recursion.
+*This* is what executes code.
+Arguments: cons <-- A single Arcyou cell
+Returns: the result of evaluating that cell. The only thing that is guaranteed
+is that you won't get another cell.
+    """
     global ArcNamespace
 #    print("cons:", cons)
     # Is it an atom?
@@ -80,24 +92,33 @@ def ArcEval(cons):
     # Not an atom or a special form?
     # It must be a function call!
     # Resolve *everything*. This will get already-defined functions as well.
-#    print("Hello from function handler")
+    #print("Hello from function handler")
+    #print("func:", func)
     consr = [ArcEval(thing) for thing in cons]
+    funcr = consr[0]
+    #print("funcr:", repr(funcr))
     arguments = consr[1:]
     #print("arguments:", arguments)
-    if arguments != []:
-        result = consr[0](*arguments)
+
+    # Implicit indexing
+    if isinstance(funcr, list):
+        result = _index_slice(funcr, arguments)
+    elif arguments != []:
+        result = funcr(*arguments)
     else:
-        result = consr[0]()
+        result = funcr()
     #print("result:", result)
     return result
 
 def is_num(thing):
+    """Check if an object is a numeric type."""
     if isinstance(thing, (int, float)):
         return True
     else:
         return False
 
 def is_string_literal(thing):
+    """Check if a symbol is actually a string literal."""
     if isinstance(thing, str):
         if thing.startswith('"') and thing.endswith('"'):
             return True
@@ -105,69 +126,15 @@ def is_string_literal(thing):
             return False
     return False
 
-# def ArcEval_old(cons):
-#     """
-# Arcyou's eval function.
-#     """
-#     global ArcNamespace
-#     if isinstance(cons, str):
-#         if cons.startswith('"') and cons.endswith('"'):
-#             return cons
-#         else:
-#             return ArcNamespace[cons]
-#     if not isinstance(cons, list):
-#         return cons
-#     if cons == []:
-#         return []
-#     func = cons[0]
-#     args = cons[1:]
-#     if func in ('if', '?'):
-#         cond = ArcEval(args[0])
-#         return ArcIf(cond, *args[1:])
-#     elif func in ('while', '@'):
-#         return ArcWhile(*args)
-#     elif func in ('for', 'f'):
-#         symbol = args[0]
-#         iterator = ArcEval(args[1])
-#         body = args[2]
-#         return ArcFor(symbol, iterator, body)
-#     elif func in ('quote', '\''):
-#         if len(args) == 1:
-#             return ArcEval(args[0])
-#         else:
-#             return args
-#     elif func in ('set', ':'):
-#         symbol = args[0]
-#         value = ArcEval(args[1])
-#         ArcNamespace[symbol] = value
-#         return value
-#     elif func in ('lambda', 'F'):
-#         params = args[0]
-#         body = args[1]
-#         return ArcFunction(params, body)
-#     elif isinstance(func, list):
-#         funcx = ArcEval(func)
-#         if isinstance(funcx, ArcFunction):
-#             return funcx(args)
-#         else:
-#             return funcx
-#     elif func in ArcNamespace.keys():
-#         funcx = ArcNamespace[func]
-#         resolved_args = list(map(ArcEval, args))
-#         if isinstance(funcx, ArcFunction):
-#             return funcx.execute(resolved_args)
-#         elif isinstance(funcx, FunctionType):
-#             return funcx(*resolved_args)
-#         else:
-#             ArcError('expected-function')
-
 def ArcIf(cond, iftrue, iffalse):
+    """If-statement."""
     if cond:
         return ArcEval(iftrue)
     else:
         return ArcEval(iffalse)
 
 def ArcFor(symbol, iterator, body):
+    """For loop/listcomp."""
     global ArcNamespace
     result = []
     for item in iterator:
@@ -178,6 +145,7 @@ def ArcFor(symbol, iterator, body):
     return result
 
 def ArcWhile(cond, body):
+    """While loop/incredibly abstract comprehension."""
     result = []
     while ArcEval(cond):
         result.append(ArcEval(body))
@@ -193,17 +161,6 @@ def _add(*args):
 
 def _mul(x, y):
     return x * y
-
-def _print(*iargs):
-    args = []
-    for arg in iargs:
-        if isinstance(arg, str):
-            if arg.startswith('"') and arg.endswith('"'):
-                args.append(arg[1:-1])
-        else:
-            args.append(arg)
-    print(*args)
-    return ""
 
 def _percent(x, y):
     if isinstance(x, (int, float)) and isinstance(y, (int, float)):
@@ -250,34 +207,48 @@ def _and(*args):
 def _line(prompt=""):
     return input(prompt)
 
-def _int(n):
-    return int(n)
+def _numcast(n, tocast):
+    try:
+        return tocast(n)
+    except ValueError:
+        ArcError('value')
 
-def _read():
-    raw = sys.stdin.read()
+def _read(nbytes=-1):
+    raw = sys.stdin.read(nbytes)
     if raw[-1] == '\n':
         final = raw[:-1]
     else:
         final = raw
     return final
 
-def _eq(x, y):
-    return x == y
-
+def _index_slice(L, aslice):
+    if len(aslice) == 1:
+        return L[aslice[0]]
+    elif len(aslice) == 2:
+        start, stop = aslice
+        step = 1
+    elif len(aslice) == 3:
+        start, stop, step = aslice
+    else:
+        ArcError('arguments')
+    return L[start:stop:step]
 
 ArcBuiltins = {'+': _add,
-               'p': _print,
+               'p': print,
                '%': _percent,
                ']': _inc,
                '[': _dec,
                '_': _range,
                '&': _and,
                'l': _line,
-               '#': _int,
+               '#': lambda n: _numcast(n, int),
+               '.': lambda n: _numcast(n, float),
                't': True,
                'f': False,
                'q': _read,
-               '=': _eq,
+               '=': lambda x,y: x==y,
+               '<': lambda x,y: x<y,
+               '>': lambda x,y: x>y,
                '*': _mul}
             #    'add': lambda *a: _add,
             #    '-': lambda x,y: _sub,

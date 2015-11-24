@@ -20,7 +20,6 @@
 
 from error import ArcError
 from re import sub, MULTILINE
-from sys import getrecursionlimit, setrecursionlimit
 
 ESCAPES = {'n': '\n',
            't': '\t',
@@ -36,16 +35,13 @@ The top-level function for this library, the only one that should be called
 externally. It applies all of the below functions in sequence to some raw
 code that it is passed.
     """
-    old_rl = getrecursionlimit()
-    setrecursionlimit(code.count('(') + 50) # This should be comfortable
     stage1 = remove_comments(code)
     stage2, literals = extract_string_literals(stage1)
     stage3 = add_close_parens(stage2)
     stage4 = tokenize(stage3)
     stage5 = clean(stage4)
-    stage6 = convints(stage5)
+    stage6 = convnums(stage5)
     stage7 = insert_string_literals(stage6, literals)
-    setrecursionlimit(old_rl)
     return stage7
 
 def remove_comments(code):
@@ -178,14 +174,14 @@ tokenize("(eq (+ x 1) y)") -> ['eq',('+','x',1),'y']
         code.append(temp)
     return code
 
-def convints(icode):
+def convnums(icode):
     """
 Trawl the AST looking for valid numbers. If it finds any, it converts them.
     """
     code = []
     for item in icode:
         if isinstance(item, list):
-            code.append(convints(item))
+            code.append(convnums(item))
         elif is_valid_int(item):
             code.append(int(item))
         elif is_valid_float(item):

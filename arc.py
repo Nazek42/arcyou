@@ -18,19 +18,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Arcyóu.  If not, see <http://www.gnu.org/licenses/>.
 
+VERSION = "a1"
+
 import sys
 import os.path
 import parsing
 import function
 
-usage = "Usage: arcyou path/to/source/code"
-
 def main():
     if len(sys.argv) > 1:
         filename = os.path.abspath(sys.argv[1])
     else:
-        print(usage)
-        sys.exit()
+        repl()
     with open(filename) as file:
         code_raw = file.read()
 
@@ -38,5 +37,26 @@ def main():
     for cons in code:
         final = function.ArcEval(cons)
     print(final)
+
+def repl():
+    n = 0
+    function.ArcNamespace['bye'] = lambda: sys.exit(print("Bye."))
+    print(replinit)
+    try:
+        while True:
+            prompt = "(油 %d)> " % n
+            print(function.ArcEval(parsing.parse(input(prompt))[0]))
+            n += 1
+    except EOFError:
+        function.ArcNamespace['bye']()
+
+replinit = """Arcyóu version {0}. Copyright (C) 2015 Benjamin Kulas.
+This program comes with ABSOLUTELY NO WARRANTY; for details see the source code
+or the GNU General Public License version 3.
+
+Type (bye) to exit.
+""".format(VERSION)
+
+
 
 main()
