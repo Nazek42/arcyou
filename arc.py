@@ -44,7 +44,7 @@ def repl():
     print(replinit)
     try:
         while True:
-            prompt = "(油 %d)> " % n
+            prompt = "(油%d)> " % n
             print(function.ArcEval(parsing.parse(input(prompt))[0]))
             n += 1
     except EOFError:
@@ -54,7 +54,7 @@ replinit = """Arcyóu version {0}. Copyright (C) 2015 Benjamin Kulas.
 This program comes with ABSOLUTELY NO WARRANTY; for details see the source code
 or the GNU General Public License version 3.
 
-Type (bye) to exit.
+Type (bye) or press Ctrl-D to exit.
 """.format(VERSION)
 
 
