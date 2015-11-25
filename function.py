@@ -21,7 +21,7 @@ from types import FunctionType
 from error import *
 from collections import Hashable
 import sys
-import parsing
+import functools
 
 class ArcFunction:
     """
@@ -30,6 +30,8 @@ A function in live code is represented by this.
     def __init__(self, params, body):
         self.params = params[:]
         self.body = body[:]
+    def __repr__(self):
+        return "F(%s)" % ' '.join(self.params)
     def __call__(self, *args):
         global ArcNamespace
         #print("ArcFunction's args:", args)
@@ -39,8 +41,10 @@ A function in live code is represented by this.
         ArcNamespace['$'] = ArcFunction(self.params, self.body)
         result = ArcEval(self.body)
         for param in self.params:
-            ArcNamespace.pop(param)
-        ArcNamespace.pop('$')
+            if param in ArcNamespace:
+                ArcNamespace.pop(param)
+        if '$' in ArcNamespace:
+            ArcNamespace.pop('$')
         return result
 
 def ArcEval(cons):
@@ -154,13 +158,8 @@ def ArcWhile(cond, body):
 def _add(*args):
     if len(args) == 1:
         return sum(args[0])
-    elif all(map(lambda x:isinstance(x,list), args)):
-        return sum(args, [])
     else:
         return sum(args)
-
-def _mul(x, y):
-    return x * y
 
 def _percent(x, y):
     if isinstance(x, (int, float)) and isinstance(y, (int, float)):
@@ -233,8 +232,19 @@ def _index_slice(L, aslice):
         ArcError('arguments')
     return L[start:stop:step]
 
+def _virg(x, y):
+    print("Hello from virg, args:", x, y)
+    if isinstance(x, (ArcFunction, FunctionType)):
+        return list(filter(x, y))
+    else:
+        return x / y
+
+def _print(*s):
+    print(*s, end='')
+    return ""
+
 ArcBuiltins = {'+': _add,
-               'p': print,
+               'p': _print,
                '%': _percent,
                ']': _inc,
                '[': _dec,
@@ -249,7 +259,18 @@ ArcBuiltins = {'+': _add,
                '=': lambda x,y: x==y,
                '<': lambda x,y: x<y,
                '>': lambda x,y: x>y,
-               '*': _mul}
+               '*': lambda x,y: x*y,
+               '-': lambda x,y: x-y,
+               'pn': lambda *a: a[-1],
+               'pg': lambda n, *a: a[n],
+               '‰': lambda x,y: x%y == 0,
+               '/': _virg,
+               'r': functools.reduce,
+               '^': lambda x,y: x**y,
+               '>>': lambda x,y: x>>y,
+               '<<': lambda x,y: x<<y,
+               '1>': lambda x:x>>1,
+               '1<': lambda x:x<<1,}
             #    'add': lambda *a: _add,
             #    '-': lambda x,y: _sub,
             #    'sub': lambda x,y: _sub,

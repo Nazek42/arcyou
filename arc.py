@@ -25,8 +25,10 @@ import os.path
 import parsing
 import function
 from cmd import Cmd
+import readline
 
 def main():
+    load('math.arc')
     if len(sys.argv) > 1:
         filename = os.path.abspath(sys.argv[1])
     else:
@@ -39,29 +41,34 @@ def main():
         final = function.ArcEval(cons)
     print(final)
 
+def load(path):
+    with open(os.path.abspath(path)) as file:
+        code = parsing.parse(file.read())
+    for cons in code:
+        function.ArcEval(cons)
+
 def repl():
     function.ArcNamespace['bye'] = lambda: print("Bye.")
-    try:
-        ArcRepl().cmdloop()
-        sys.exit()
-    except EOFError:
-        print("Bye.")
-        sys.exit()
+    ArcRepl().cmdloop()
+    sys.exit()
 
 class ArcRepl(Cmd):
-    intro = """Arcyóu version {0}. Copyright (C) 2015 Benjamin Kulas.
+    intro = """
+Arcyóu version {0}. Copyright (C) 2015 Benjamin Kulas.
 This program comes with ABSOLUTELY NO WARRANTY; for details see the source code or the GNU General Public License version 3.
 
 Type (bye) to exit.
     """.format(VERSION)
-    use_rawinput = False
-    prompt = "(油:0)> "
+    use_rawinput = True
     fprompt = "(油:%d)> "
     n = 0
+    prompt = fprompt % n
     def precmd(self, line):
-        return parsing.parse(line)[0]
+        if line:
+            return parsing.parse(line)[0]
     def onecmd(self, cons):
-        return print(function.ArcEval(cons))
+        print(function.ArcEval(cons))
+        return ""
     def postcmd(self, stop, cons):
         self.n += 1
         self.prompt = self.fprompt % self.n
