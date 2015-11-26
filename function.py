@@ -185,6 +185,8 @@ def _dec(n):
 
 def _range(*args):
     if len(args) == 1:
+        if isinstance(args[0], (list, str)):
+            return len(args[0])
         start = 0
         stop = ArcEval(args[0])
         step = 1
