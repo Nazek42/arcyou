@@ -235,7 +235,7 @@ def _index_slice(L, aslice):
     return L[start:stop:step]
 
 def _virg(x, y):
-    print("Hello from virg, args:", x, y)
+    #print("Hello from virg, args:", x, y)
     if isinstance(x, (ArcFunction, FunctionType)):
         return list(filter(x, y))
     else:

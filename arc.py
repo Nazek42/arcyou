@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Arcyóu.  If not, see <http://www.gnu.org/licenses/>.
 
-VERSION = "a1"
+VERSION = "v0.1a"
 
 import sys
 import os.path
@@ -26,11 +26,15 @@ import parsing
 import function
 from cmd import Cmd
 import readline
+import comp
 
 def main():
-    load('math.arc')
-    if len(sys.argv) > 1:
+    load('math.ayc')
+    if len(sys.argv) == 2:
         filename = os.path.abspath(sys.argv[1])
+    elif len(sys.argv) == 3 and sys.argv[1] in ('-c', '--compile'):
+        comp.ArcCompile(sys.argv[2])
+        sys.exit()
     else:
         repl()
     with open(filename) as file:
@@ -42,10 +46,9 @@ def main():
     print(final)
 
 def load(path):
-    with open(os.path.abspath(path)) as file:
-        code = parsing.parse(file.read())
-    for cons in code:
-        function.ArcEval(cons)
+    with open(path, 'rb') as file:
+        diff = comp.pickle.load(file)
+        function.ArcNamespace.update(diff)
 
 def repl():
     function.ArcNamespace['bye'] = lambda: print("Bye.")
