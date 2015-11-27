@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding=utf8 -*-
+# -*- coding=utf-8 -*-
 #
 # Copyright 2015 Benjamin Kulas
 #
@@ -21,12 +21,13 @@
 VERSION = "v0.1a"
 
 import sys
-import os.path
+import os
 import parsing
 import function
 from cmd import Cmd
-import readline
 import comp
+if os.name == 'posix':
+    import readline
 
 def main():
     load('math.ayc')
