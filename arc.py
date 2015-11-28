@@ -28,6 +28,9 @@ from cmd import Cmd
 import comp
 if os.name == 'posix':
     import readline
+    have_readline = True
+else:
+    have_readline = False
 
 def main():
     load('math.ayc')
@@ -53,6 +56,7 @@ def load(path):
 
 def repl():
     function.ArcNamespace['bye'] = lambda: print("Bye.")
+    print("\nWARNING: GNU readline functionality may not be available.")
     ArcRepl().cmdloop()
     sys.exit()
 
