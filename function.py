@@ -22,6 +22,7 @@ from error import *
 from collections import Hashable
 import sys
 import functools
+import time
 
 class ArcFunction:
     """
@@ -298,7 +299,8 @@ ArcBuiltins = {'+': _add,
                '#?': lambda x: isinstance(x, int),
                '.?': lambda x: isinstance(x, float),
                'n?': lambda x: isinstance(x, (int, float)),
-               }
+               'zz': time.sleep,
+               'st': time.strftime,}
             #    'add': lambda *a: _add,
             #    '-': lambda x,y: _sub,
             #    'sub': lambda x,y: _sub,
