@@ -289,6 +289,7 @@ ArcBuiltins = {'+': _add,
                'n': False,
                'q': _read,
                '=': lambda x,y: x==y,
+               '==': lambda x,y: x==y and type(x)==type(y)
                '<': lambda x,y: x<y,
                '>': lambda x,y: x>y,
                '*': lambda x,y: x*y,
