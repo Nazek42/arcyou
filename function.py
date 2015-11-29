@@ -257,7 +257,7 @@ def _virg(x, y):
         return x / y
 
 def _print(*s):
-    print(*s, end='')
+    print(*s)
     return ""
 
 ArcBuiltins = {'+': _add,
