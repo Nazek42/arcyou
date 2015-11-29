@@ -114,7 +114,7 @@ is that you won't get another cell.
     #print("arguments:", arguments)
 
     # Implicit indexing
-    if isinstance(funcr, list):
+    if isinstance(funcr, (str, list)):
         result = _index_slice(funcr, arguments)
     elif arguments != []:
         result = funcr(*arguments)

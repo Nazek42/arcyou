@@ -49,7 +49,7 @@ def main():
     print(final)
 
 def load(path):
-    with open(path, 'rb') as file:
+    with open(path, 'rt') as file:
         code_raw = file.read()
     code = parsing.parse(code_raw)
     for cons in code:
@@ -59,7 +59,10 @@ def repl():
     function.ArcNamespace['bye'] = lambda: print("Bye.")
     if not have_readline:
         print("\nWARNING: GNU readline functionality may not be available.")
-    ArcRepl().cmdloop()
+    try:
+        ArcRepl().cmdloop()
+    except KeyboardInterrupt:
+        function.ArcNamespace['bye']()
     sys.exit()
 
 class ArcRepl(Cmd):
@@ -67,7 +70,7 @@ class ArcRepl(Cmd):
 Arcyóu version {0}. Copyright (C) 2015 Benjamin Kulas.
 This program comes with ABSOLUTELY NO WARRANTY; for details see the source code or the GNU General Public License version 3.
 
-Type (bye) to exit.
+Type (bye) or press Ctrl-C to exit.
     """.format(VERSION)
     use_rawinput = True
     fprompt = "(油:%d)> "
