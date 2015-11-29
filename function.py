@@ -270,6 +270,8 @@ def _stackfilter(L, *funcs):
 
 def _stackmap(L, *funcs):
     final = L[:]
+    if isinstance(funcs[0], list):
+        funcs = funcs[0]
     for func in funcs:
         final = map(func, final)
     return list(final)
@@ -289,7 +291,7 @@ ArcBuiltins = {'+': _add,
                'n': False,
                'q': _read,
                '=': lambda x,y: x==y,
-               '==': lambda x,y: x==y and type(x)==type(y)
+               '==': lambda x,y: x==y and type(x)==type(y),
                '<': lambda x,y: x<y,
                '>': lambda x,y: x>y,
                '*': lambda x,y: x*y,
