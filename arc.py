@@ -25,7 +25,6 @@ import os
 import parsing
 import function
 from cmd import Cmd
-import comp
 if os.name == 'posix':
     import readline
     have_readline = True
@@ -33,7 +32,7 @@ else:
     have_readline = False
 
 def main():
-    load('math.ayc')
+    load('math.arc')
     if len(sys.argv) == 2:
         filename = os.path.abspath(sys.argv[1])
     elif len(sys.argv) == 3 and sys.argv[1] in ('-c', '--compile'):
@@ -51,8 +50,10 @@ def main():
 
 def load(path):
     with open(path, 'rb') as file:
-        diff = comp.pickle.load(file)
-        function.ArcNamespace.update(diff)
+        code_raw = file.read()
+    code = parsing.parse(code_raw)
+    for cons in code:
+        function.ArcEval(cons)
 
 def repl():
     function.ArcNamespace['bye'] = lambda: print("Bye.")
