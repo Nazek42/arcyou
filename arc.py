@@ -16,7 +16,8 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Arcyóu.  If not, see <http://www.gnu.org/licenses/>.
+# along with Arcyóu, located in the file `LICENSE'. If not, see
+# <http://www.gnu.org/licenses/>.
 
 VERSION = "v0.1a"
 
@@ -25,10 +26,10 @@ import os
 import parsing
 import function
 from cmd import Cmd
-if os.name == 'posix':
+try:
     import readline
     have_readline = True
-else:
+except ImportError:
     have_readline = False
 
 def main():
@@ -53,7 +54,8 @@ def load(path):
         code_raw = file.read()
     code = parsing.parse(code_raw)
     for cons in code:
-        function.ArcEval(cons)
+        if cons:
+            function.ArcEval(cons)
 
 def repl():
     function.ArcNamespace['bye'] = lambda: print("Bye.")
@@ -66,21 +68,21 @@ def repl():
     sys.exit()
 
 class ArcRepl(Cmd):
-    intro = """
-Arcyóu version {0}. Copyright (C) 2015 Benjamin Kulas.
+    intro = """Arcy\u00F3u version {0}. Copyright (C) 2015 Benjamin Kulas.
 This program comes with ABSOLUTELY NO WARRANTY; for details see the source code or the GNU General Public License version 3.
 
 Type (bye) or press Ctrl-C to exit.
     """.format(VERSION)
     use_rawinput = True
-    fprompt = "(油:%d)> "
+    fprompt = "(\u6CB9:%d)> "
     n = 0
     prompt = fprompt % n
     def precmd(self, line):
         if line:
             return parsing.parse(line)[0]
     def onecmd(self, cons):
-        print(function.ArcEval(cons))
+        if cons:
+            print(function.ArcEval(cons))
         return ""
     def postcmd(self, stop, cons):
         self.n += 1

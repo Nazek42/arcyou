@@ -173,8 +173,11 @@ def _add(*args):
 def _percent(x, y):
     if isinstance(x, (int, float)) and isinstance(y, (int, float)):
         return x % y
-    elif isinstance(x, str) and isinstance(y, list):
-        return x % tuple(y)
+    elif isinstance(x, str):
+        try:
+            return x % tuple(y)
+        except TypeError:
+            return x % (y)
     elif isinstance(x, (ArcFunction, FunctionType)) and isinstance(y, list):
         return list(map(x, y))
     else:
@@ -260,6 +263,17 @@ def _print(*s):
     print(*s)
     return ""
 
+def _stackfilter(L, *funcs):
+    if isinstance(funcs[0], list):
+        funcs = funcs[0]
+    return list(filter(lambda i: all(func(i) for func in funcs), L))
+
+def _stackmap(L, *funcs):
+    final = L[:]
+    for func in funcs:
+        final = map(func, final)
+    return list(final)
+
 ArcBuiltins = {'+': _add,
                'p': _print,
                '%': _percent,
@@ -283,6 +297,7 @@ ArcBuiltins = {'+': _add,
                'pg': lambda n, *a: a[n],
                '‰': lambda x,y: x%y == 0,
                '/': _virg,
+               '#/': lambda x,y: x//y,
                'r': functools.reduce,
                '^': lambda x,y: x**y,
                'b>': lambda x,y: x>>y,
@@ -292,15 +307,23 @@ ArcBuiltins = {'+': _add,
                'b&': lambda x,y: x&y,
                'b|': lambda x,y: x|y,
                'b^': lambda x,y: x^y,
-               'b~': lambda x: ~x,
-               '~': lambda x: not x,
+               '~': lambda x: ~x,
+               '!': lambda x: not x,
                'l?': lambda x: isinstance(x, list),
                's?': lambda x: isinstance(x, str),
                '#?': lambda x: isinstance(x, int),
                '.?': lambda x: isinstance(x, float),
                'n?': lambda x: isinstance(x, (int, float)),
                'zz': time.sleep,
-               'st': time.strftime,}
+               'st': time.strftime,
+               'z': lambda L1,L2: list(zip(L1,L2)),
+               't': lambda L: list(zip(*L1)),
+               'lc': lambda s: s.lower(),
+               'uc': lambda s: s.upper(),
+               'E': lambda i,L: i in L,
+               '//': _stackfilter,
+               '%%': _stackmap,
+               's': lambda s, sep=' ': s.split(sep),}
             #    'add': lambda *a: _add,
             #    '-': lambda x,y: _sub,
             #    'sub': lambda x,y: _sub,
