@@ -28,6 +28,7 @@ class ArcFunction:
 A function in live code is represented by this.
     """
     def __init__(self, params, body):
+        #print("Hello from function constructor, params:", params)
         self.params = params[:]
         self.body = body[:]
     def __repr__(self):
@@ -36,6 +37,7 @@ A function in live code is represented by this.
         global ArcNamespace
         #print("ArcFunction's args:", args)
         for param, arg in zip(self.params, args):
+            #print("PA:", param, '|||', arg)
             ArcNamespace[param] = arg
         # Fixpoint
         ArcNamespace['$'] = ArcFunction(self.params, self.body)
@@ -91,7 +93,13 @@ is that you won't get another cell.
         return value
     # Quote
     if func == '\'':
-        return cons[1:]
+        result = []
+        for item in cons[1:]:
+            if isinstance(item, list):
+                result.append(ArcEval(item))
+            else:
+                result.append(item)
+        return result
 
     # Not an atom or a special form?
     # It must be a function call!
@@ -204,6 +212,12 @@ def _and(*args):
         return all(args[0])
     else:
         return all(args)
+
+def _or(*args):
+    if len(args) == 1:
+        return any(args[0])
+    else:
+        return any(args)
 
 def _line(prompt=""):
     return input(prompt)

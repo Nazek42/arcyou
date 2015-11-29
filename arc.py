@@ -56,7 +56,8 @@ def load(path):
 
 def repl():
     function.ArcNamespace['bye'] = lambda: print("Bye.")
-    print("\nWARNING: GNU readline functionality may not be available.")
+    if not have_readline:
+        print("\nWARNING: GNU readline functionality may not be available.")
     ArcRepl().cmdloop()
     sys.exit()
 
