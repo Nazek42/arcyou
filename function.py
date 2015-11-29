@@ -323,7 +323,7 @@ ArcBuiltins = {'+': _add,
                'E': lambda i,L: i in L,
                '//': _stackfilter,
                '%%': _stackmap,
-               's': lambda s, sep=' ': s.split(sep),}
+               'v': lambda s, sep=' ': s.split(sep),}
             #    'add': lambda *a: _add,
             #    '-': lambda x,y: _sub,
             #    'sub': lambda x,y: _sub,
