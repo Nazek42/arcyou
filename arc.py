@@ -44,16 +44,17 @@ def main():
     with open(filename) as file:
         code_raw = file.read()
 
-    code = parsing.parse(code_raw)
-    for cons in code:
+    ast = parsing.parse(code_raw)
+    function.ArcNamespace['¢'] = ast
+    for cons in ast:
         final = function.ArcEval(cons)
     print(final)
 
 def load(path):
     with open(path, 'rt') as file:
         code_raw = file.read()
-    code = parsing.parse(code_raw)
-    for cons in code:
+    ast = parsing.parse(code_raw)
+    for cons in ast:
         if cons:
             function.ArcEval(cons)
 
