@@ -61,7 +61,7 @@ Arguments: cons <-- A single Arcyou cell
 Returns: the result of evaluating that cell. The only thing that is guaranteed
 is that you won't get another cell.
     """
-#    print("cons:", cons)
+    #print("cons:", cons)
     # Is it an atom?
     global nsset, nsget
     if is_num(cons):
@@ -69,12 +69,17 @@ is that you won't get another cell.
     if is_string_literal(cons):
         return cons[1:-1]
     if isinstance(cons, Hashable):
+        #print("Hello from hashable")
         try:
-            return nsget(cons)
-        except KeyError:
-            return cons
+            lookup = nsget(cons)
+            #print("ns:", lookup)
+            if lookup==None and type(lookup)==type(None):
+                return cons
+            return lookup
+        except:
+            raise
     # Is it a special form?
-#    print("Hello from special form handler")
+    #print("Hello from special form handler")
     func = cons[0]
     # If
     if func == '?':
@@ -170,15 +175,14 @@ def _add(*args):
 def _percent(x, y):
     if isinstance(x, (int, float)) and isinstance(y, (int, float)):
         return x % y
-    elif isinstance(x, str):
+    if isinstance(x, str):
         try:
             return x % tuple(y)
         except TypeError:
             return x % (y)
-    elif isinstance(x, (ArcFunction, FunctionType)) and isinstance(y, list):
+    if isinstance(x, (ArcFunction, FunctionType)) and isinstance(y, list):
         return list(map(x, y))
-    else:
-        ArcError('value')
+    ArcError('value')
 
 def _inc(n):
     if isinstance(n, (int, float)):
@@ -246,7 +250,7 @@ def _read(nbytes=-1):
 def _index_slice(L, aslice):
     if len(aslice) == 1:
         return L[aslice[0]]
-    elif len(aslice) == 2:
+    if len(aslice) == 2:
         start, stop = aslice
         step = 1
     elif len(aslice) == 3:

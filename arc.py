@@ -91,7 +91,7 @@ Type (bye) or press Ctrl-C to exit.
         self.prompt = self.fprompt % self.n
         return cons == ['bye']
 
-if len(sys.argv) > 1 and 'p' in sys.argv[1]:
+if len(sys.argv) > 1 and sys.argv[1] in ('-p', '--profile'):
     sys.argv.pop(0)
     cProfile.run("main()")
 else:
