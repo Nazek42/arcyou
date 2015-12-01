@@ -23,6 +23,7 @@ from collections import Hashable
 import sys
 import functools
 import time
+import operator
 
 class ArcFunction:
     """
@@ -35,12 +36,11 @@ A function in live code is represented by this.
     def __repr__(self):
         return "F(%s)" % ' '.join(self.params)
     def __call__(self, *args):
-        global nsget
-        global nsset
+        global nsset, nspop
         #print("ArcFunction's args:", args)
         nsset(zip(self.params, args))
         # Fixpoint
-        nsset([('$', ArcFunction(self.params, self.body))])
+        nsset([ ('$', ArcFunction(self.params, self.body)) ])
         result = ArcEval(self.body)
         for param in self.params:
             try:
@@ -63,6 +63,7 @@ is that you won't get another cell.
     """
 #    print("cons:", cons)
     # Is it an atom?
+    global nsset, nsget
     if is_num(cons):
         return cons
     if is_string_literal(cons):
@@ -78,10 +79,10 @@ is that you won't get another cell.
     # If
     if func == '?':
         cond = ArcEval(cons[1])
-        return ArcIf(cond, *cons[2:4])
+        return ArcIf(cond, cons[2:4])
     # While
     if func == '@':
-        return ArcWhile(*cons[1:3])
+        return ArcWhile(cons[1:3])
     # For
     if func == 'f':
         iterator = ArcEval(cons[2])
@@ -92,7 +93,7 @@ is that you won't get another cell.
     # Set
     if func == ':':
         value = ArcEval(cons[2])
-        nsset([(cons[1], value)])
+        nsset([ (cons[1], value) ])
         return value
     # Quote
     if func == '\'':
@@ -122,22 +123,16 @@ is that you won't get another cell.
 
 def is_num(thing):
     """Check if an object is a numeric type."""
-    if isinstance(thing, (int, float)):
-        return True
-    else:
-        return False
+    return isinstance(thing, (int, float))
 
 def is_string_literal(thing):
     """Check if a symbol is actually a string literal."""
-    if isinstance(thing, str):
-        if thing.startswith('"') and thing.endswith('"'):
-            return True
-        else:
-            return False
-    return False
+    global sw, ew
+    return isinstance(thing, str) and sw(thing, '"') and ew(thing, '"')
 
-def ArcIf(cond, iftrue, iffalse):
+def ArcIf(cond, cases):
     """If-statement."""
+    iftrue, iffalse = cases
     if cond:
         return ArcEval(iftrue)
     else:
@@ -145,10 +140,11 @@ def ArcIf(cond, iftrue, iffalse):
 
 def ArcFor(symbol, iterator, body):
     """For loop/listcomp."""
+    global nsset, nspop
     result = []
     rappend = result.append
     for item in iterator:
-        nsset([(symbol, item)])
+        nsset([ (symbol, item) ])
         rappend(ArcEval(body))
     try:
         nspop(symbol)
@@ -156,8 +152,9 @@ def ArcFor(symbol, iterator, body):
         pass
     return result
 
-def ArcWhile(cond, body):
+def ArcWhile(args):
     """While loop/incredibly abstract comprehension."""
+    cond, body = args
     result = []
     rappend = result.append
     while ArcEval(cond):
@@ -226,9 +223,15 @@ def _or(*args):
 def _line(prompt=""):
     return input(prompt)
 
-def _numcast(n, tocast):
+def _icast(n):
     try:
-        return tocast(n)
+        return int(n)
+    except ValueError:
+        ArcError('value')
+
+def _fcast(n):
+    try:
+        return float(n)
     except ValueError:
         ArcError('value')
 
@@ -285,48 +288,48 @@ ArcBuiltins = {'+': _add,
                '&': _and,
                '|': _or,
                'l': _line,
-               '#': lambda n: _numcast(n, int),
-               '.': lambda n: _numcast(n, float),
+               '#': _icast,
+               '.': _fcast,
                't': True,
                'n': False,
                'q': _read,
-               '=': lambda x,y: x==y,
+               '=': operator.eq,
                '==': lambda x,y: x==y and type(x)==type(y),
-               '<': lambda x,y: x<y,
-               '>': lambda x,y: x>y,
+               '<': operator.lt,
+               '>': operator.gt,
                '*': lambda x,y: x*y,
-               '-': lambda x,y: x-y,
+               '-': operator.sub,
                'pn': lambda *a: a[-1],
                'pg': lambda n, *a: a[n],
                '‰': lambda x,y: x%y == 0,
                '/': _virg,
-               '#/': lambda x,y: x//y,
+               '#/': operator.floordiv,
                'r': functools.reduce,
-               '^': lambda x,y: x**y,
-               'b>': lambda x,y: x>>y,
-               'b<': lambda x,y: x<<y,
-               '1>': lambda x:x>>1,
-               '1<': lambda x:x<<1,
-               'b&': lambda x,y: x&y,
-               'b|': lambda x,y: x|y,
-               'b^': lambda x,y: x^y,
-               '~': lambda x: ~x,
-               '!': lambda x: not x,
+               '^': operator.pow,
+               'b>': operator.rshift,
+               'b<': operator.lshift,
+               '1>': lambda x: x>>1,
+               '1<': lambda x: x<<1,
+               'b&': operator.and_,
+               'b|': operator.or_,
+               'b^': operator.xor,
+               '~': operator.inv,
+               '!': operator.not_,
                'l?': lambda x: isinstance(x, list),
                's?': lambda x: isinstance(x, str),
                '#?': lambda x: isinstance(x, int),
                '.?': lambda x: isinstance(x, float),
-               'n?': lambda x: isinstance(x, (int, float)),
+               'n?': is_num,
                'zz': time.sleep,
                'st': time.strftime,
                'z': lambda L1,L2: list(zip(L1,L2)),
                't': lambda L: list(zip(*L1)),
-               'lc': lambda s: s.lower(),
-               'uc': lambda s: s.upper(),
-               'E': lambda i,L: i in L,
+               'lc': str.lower,
+               'uc': str.upper,
+               'E': list.__contains__,
                '//': _stackfilter,
                '%%': _stackmap,
-               'v': lambda s, sep=' ': s.split(sep),
+               'v': str.split,
                '\\': lambda s: s[::-1],
                'a': lambda L,x: L+[x],
                'i': lambda L,i,x: L[:i]+[x]+L[i:],}
@@ -380,3 +383,6 @@ ArcNamespace.update(ArcBuiltins)
 nsget = ArcNamespace.get
 nsset = ArcNamespace.update
 nspop = ArcNamespace.pop
+
+sw = str.startswith
+ew = str.endswith
