@@ -35,19 +35,22 @@ A function in live code is represented by this.
     def __repr__(self):
         return "F(%s)" % ' '.join(self.params)
     def __call__(self, *args):
-        global ArcNamespace
+        global nsget
+        global nsset
         #print("ArcFunction's args:", args)
-        for param, arg in zip(self.params, args):
-            #print("PA:", param, '|||', arg)
-            ArcNamespace[param] = arg
+        nsset(zip(self.params, args))
         # Fixpoint
-        ArcNamespace['$'] = ArcFunction(self.params, self.body)
+        nsset([('$', ArcFunction(self.params, self.body))])
         result = ArcEval(self.body)
         for param in self.params:
-            if param in ArcNamespace:
-                ArcNamespace.pop(param)
-        if '$' in ArcNamespace:
-            ArcNamespace.pop('$')
+            try:
+                nspop(param)
+            except KeyError:
+                pass
+        try:
+            nspop('$')
+        except KeyError:
+            pass
         return result
 
 def ArcEval(cons):
@@ -58,7 +61,6 @@ Arguments: cons <-- A single Arcyou cell
 Returns: the result of evaluating that cell. The only thing that is guaranteed
 is that you won't get another cell.
     """
-    global ArcNamespace
 #    print("cons:", cons)
     # Is it an atom?
     if is_num(cons):
@@ -66,9 +68,9 @@ is that you won't get another cell.
     if is_string_literal(cons):
         return cons[1:-1]
     if isinstance(cons, Hashable):
-        if cons in ArcNamespace:
-            return ArcNamespace[cons]
-        else:
+        try:
+            return nsget(cons)
+        except KeyError:
             return cons
     # Is it a special form?
 #    print("Hello from special form handler")
@@ -90,16 +92,11 @@ is that you won't get another cell.
     # Set
     if func == ':':
         value = ArcEval(cons[2])
-        ArcNamespace[cons[1]] = value
+        nsset([(cons[1], value)])
         return value
     # Quote
     if func == '\'':
-        result = []
-        for item in cons[1:]:
-            if isinstance(item, list):
-                result.append(ArcEval(item))
-            else:
-                result.append(item)
+        result = [ArcEval(i) if isinstance(i, list) else i for i in cons[1:]]
         return result
 
     # Not an atom or a special form?
@@ -148,20 +145,23 @@ def ArcIf(cond, iftrue, iffalse):
 
 def ArcFor(symbol, iterator, body):
     """For loop/listcomp."""
-    global ArcNamespace
     result = []
+    rappend = result.append
     for item in iterator:
-        ArcNamespace[symbol] = item
-        result.append(ArcEval(body))
-    if symbol in ArcNamespace:
-        ArcNamespace.pop(symbol)
+        nsset([(symbol, item)])
+        rappend(ArcEval(body))
+    try:
+        nspop(symbol)
+    except KeyError:
+        pass
     return result
 
 def ArcWhile(cond, body):
     """While loop/incredibly abstract comprehension."""
     result = []
+    rappend = result.append
     while ArcEval(cond):
-        result.append(ArcEval(body))
+        rappend(ArcEval(body))
     return result
 
 def _add(*args):
@@ -377,3 +377,6 @@ ArcBuiltins = {'+': _add,
 
 ArcNamespace = {}
 ArcNamespace.update(ArcBuiltins)
+nsget = ArcNamespace.get
+nsset = ArcNamespace.update
+nspop = ArcNamespace.pop

@@ -26,6 +26,7 @@ import os
 import parsing
 import function
 from cmd import Cmd
+import cProfile
 try:
     import readline
     have_readline = True
@@ -45,7 +46,7 @@ def main():
         code_raw = file.read()
 
     ast = parsing.parse(code_raw)
-    function.ArcNamespace['¢'] = ast
+    function.nsset([('¢', ast)])
     for cons in ast:
         final = function.ArcEval(cons)
     print(final)
@@ -59,13 +60,13 @@ def load(path):
             function.ArcEval(cons)
 
 def repl():
-    function.ArcNamespace['bye'] = lambda: print("Bye.")
+    function.nsset([('bye', lambda: print("Bye."))])
     if not have_readline:
         print("\nWARNING: GNU readline functionality may not be available.")
     try:
         ArcRepl().cmdloop()
     except KeyboardInterrupt:
-        function.ArcNamespace['bye']()
+        function.nsget('bye')()
     sys.exit()
 
 class ArcRepl(Cmd):
@@ -90,5 +91,8 @@ Type (bye) or press Ctrl-C to exit.
         self.prompt = self.fprompt % self.n
         return cons == ['bye']
 
-
-main()
+if len(sys.argv) > 1 and 'p' in sys.argv[1]:
+    sys.argv.pop(0)
+    cProfile.run("main()")
+else:
+    main()
