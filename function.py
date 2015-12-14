@@ -1,4 +1,4 @@
-# Arcyou's function library.
+# Arcyou's function library. This handles the actual execution of code.
 
 # Copyright 2015 Benjamin Kulas
 #
@@ -20,12 +20,7 @@
 from types import FunctionType
 from error import *
 from collections import Hashable
-import sys
-import functools
-import time
-import operator
-import math
-import random
+from arcstdlib import ArcBuiltins, _index_slice, is_num
 
 class ArcFunction:
     """
@@ -80,6 +75,10 @@ is that you won't get another cell.
             return lookup
         except:
             raise
+
+    if not cons: # empty list?
+        return None
+    
     # Is it a special form?
     #print("Hello from special form handler")
     func = cons[0]
@@ -128,10 +127,6 @@ is that you won't get another cell.
     #print("result:", result)
     return result
 
-def is_num(thing):
-    """Check if an object is a numeric type."""
-    return isinstance(thing, (int, float))
-
 def is_string_literal(thing):
     """Check if a symbol is actually a string literal."""
     global sw, ew
@@ -167,223 +162,6 @@ def ArcWhile(args):
     while ArcEval(cond):
         rappend(ArcEval(body))
     return result
-
-def _add(*args):
-    if len(args) == 1:
-        return sum(args[0])
-    else:
-        return sum(args)
-
-def _percent(x, y):
-    if isinstance(x, (int, float)) and isinstance(y, (int, float)):
-        return x % y
-    if isinstance(x, str):
-        try:
-            return x % tuple(y)
-        except TypeError:
-            return x % (y)
-    if isinstance(x, (ArcFunction, FunctionType)) and isinstance(y, list):
-        return list(map(x, y))
-    ArcError('value')
-
-def _inc(n):
-    if isinstance(n, (int, float)):
-        return n + 1
-    else:
-        ArcError('value')
-
-def _dec(n):
-    if isinstance(n, (int, float)):
-        return n - 1
-    else:
-        ArcError('value')
-
-def _range(*args):
-    if len(args) == 1:
-        if isinstance(args[0], (list, str)):
-            return len(args[0])
-        start = 0
-        stop = ArcEval(args[0])
-        step = 1
-    elif len(args) == 2:
-        start, stop = args
-        step = 1
-    elif len(args) == 3:
-        start, stop, step = args
-    else:
-        ArcError('arguments')
-    return list(range(start, stop, step))
-
-def _and(*args):
-    if len(args) == 1:
-        return all(args[0])
-    else:
-        return all(args)
-
-def _or(*args):
-    if len(args) == 1:
-        return any(args[0])
-    else:
-        return any(args)
-
-def _line(prompt=""):
-    return input(prompt)
-
-def _icast(n):
-    try:
-        return int(n)
-    except ValueError:
-        ArcError('value')
-
-def _fcast(n):
-    try:
-        return float(n)
-    except ValueError:
-        ArcError('value')
-
-def _read(nbytes=-1):
-    raw = sys.stdin.read(nbytes)
-    if raw[-1] == '\n':
-        final = raw[:-1]
-    else:
-        final = raw
-    return final
-
-def _index_slice(L, aslice):
-    if len(aslice) == 1:
-        return L[aslice[0]]
-    if len(aslice) == 2:
-        start, stop = aslice
-        step = 1
-    elif len(aslice) == 3:
-        start, stop, step = aslice
-    else:
-        ArcError('arguments')
-    return L[start:stop:step]
-
-def _virg(x, y):
-    #print("Hello from virg, args:", x, y)
-    if isinstance(x, (ArcFunction, FunctionType)):
-        return list(filter(x, y))
-    else:
-        return x / y
-
-def _print(*s):
-    print(*s)
-    return ""
-
-def _stackfilter(L, *funcs):
-    if isinstance(funcs[0], list):
-        funcs = funcs[0]
-    return list(filter(lambda i: all(func(i) for func in funcs), L))
-
-def _stackmap(L, *funcs):
-    final = L[:]
-    if isinstance(funcs[0], list):
-        funcs = funcs[0]
-    for func in funcs:
-        final = map(func, final)
-    return list(final)
-
-ArcBuiltins = {'+': _add,
-               'p': _print,
-               '%': _percent,
-               ']': _inc,
-               '[': _dec,
-               '_': _range,
-               '&': _and,
-               '|': _or,
-               'l': _line,
-               '#': _icast,
-               '.': _fcast,
-               't': True,
-               'n': False,
-               'q': _read,
-               '=': operator.eq,
-               '==': lambda x,y: x==y and type(x)==type(y),
-               '<': operator.lt,
-               '>': operator.gt,
-               '*': lambda x,y: x*y,
-               '-': operator.sub,
-               'pn': lambda *a: a[-1],
-               'pg': lambda n, *a: a[n],
-               '/?': lambda x,y: x%y == 0,
-               '/': _virg,
-               '#/': operator.floordiv,
-               'r': functools.reduce,
-               '^': operator.pow,
-               'b>': operator.rshift,
-               'b<': operator.lshift,
-               '1>': lambda x: x>>1,
-               '1<': lambda x: x<<1,
-               'b&': operator.and_,
-               'b|': operator.or_,
-               'b^': operator.xor,
-               '~': operator.inv,
-               '!': operator.not_,
-               'l?': lambda x: isinstance(x, list),
-               's?': lambda x: isinstance(x, str),
-               '#?': lambda x: isinstance(x, int),
-               '.?': lambda x: isinstance(x, float),
-               'n?': is_num,
-               'zz': time.sleep,
-               'st': time.strftime,
-               'z': lambda L1,L2: list(zip(L1,L2)),
-               't': lambda L: list(zip(*L1)),
-               'lc': str.lower,
-               'uc': str.upper,
-               'E': list.__contains__,
-               '//': _stackfilter,
-               '%%': _stackmap,
-               'v': str.split,
-               '\\': lambda s: s[::-1],
-               'a': lambda L,x: L+[x],
-               'i': lambda L,i,x: L[:i]+[x]+L[i:],
-               'R': random.random,}
-            #    'add': lambda *a: _add,
-            #    '-': lambda x,y: _sub,
-            #    'sub': lambda x,y: _sub,
-            #    '*': lambda *m: _mul,
-            #    'mul': lambda *m: _mul,
-            #    '/': lambda x,y: _div,
-            #    'div': lambda x,y: _div,
-            #    '//': lambda x,y: _floordiv,
-            #    'floordiv': lambda x,y: _floordiv,
-            #    '**': lambda x,y: _pow,
-            #    'pow': lambda x,y: _pow,
-            #    '~': lambda x: _bnot,
-            #    'bnot': lambda x: _bnot,
-            #    '!': _factorial,
-            #    'factorial': _factorial,
-            #    '#': int,
-            #    'int': int,
-            #    '.': float,
-            #    'float': float,
-            #    '&': _band,
-            #    'band': _band,
-            #    '|': _bor,
-            #    'bor': _bor,
-            #    '^': _bxor,
-            #    'bxor': _bxor,
-            #    '=': _eq,
-            #    'eq': _eq,
-            #    '\\': _reverse,
-            #    'reverse': _reverse,
-            #    '<': _lt,
-            #    'lt': _lt,
-            #    '>': gt,
-            #    'gt': gt,
-            #    '<=': lambda x,y: x<=y,
-            #    'lteq': lambda x,y: x<=y,
-            #    '>=': lambda x,y: x>=y,
-            #    'gteq': lambda x,y: x>=y,
-            #    '==': _stricteq,
-            #    'stricteq': _stricteq,
-            #    'lambda': ArcFunction,
-            #    'F': ArcFunction,
-            #    'sin': _sin,
-            #    'cos': _cos,
-            #    'tan': _tan}
 
 ArcNamespace = {}
 ArcNamespace.update(ArcBuiltins)
