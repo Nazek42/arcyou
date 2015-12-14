@@ -30,7 +30,7 @@
 
 ; Divisor list
 (: d/ (F(x)
-  (/ (F(i) (‰ x i)) (_ 1 (] x)))))
+  (/ (F(i) (/? x i)) (_ 1 (] x))))
 
 ; Factorial
 (: f! (F(x)

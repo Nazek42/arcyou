@@ -17,12 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Arcyóu.  If not, see <http://www.gnu.org/licenses/>.
 
-import functools
+from error import *
+from types import FunctionType
 import time
 import operator
 import math
 import random
 import sys
+import functools
 
 def is_num(thing):
     """Check if an object is a numeric type."""
@@ -44,7 +46,7 @@ def _percent(x, y):
             return x % tuple(y)
         except TypeError:
             return x % (y)
-    if isinstance(x, (ArcFunction, FunctionType)) and isinstance(y, list):
+    if (isinstance(x, FunctionType) or is_ArcFunction(x)) and isinstance(y, list):
         return list(map(x, y))
     ArcError('value')
 
@@ -65,7 +67,7 @@ def _range(*args):
         if isinstance(args[0], (list, str)):
             return len(args[0])
         start = 0
-        stop = ArcEval(args[0])
+        stop = args[0]
         step = 1
     elif len(args) == 2:
         start, stop = args
@@ -124,8 +126,11 @@ def _index_slice(L, aslice):
     return L[start:stop:step]
 
 def _virg(x, y):
+    #print("x.__class__:", x.__class__)
     #print("Hello from virg, args:", x, y)
-    if isinstance(x, (ArcFunction, FunctionType)):
+    #print(isinstance(x, FunctionType))
+    #print(is_ArcFunction(x))
+    if isinstance(x, FunctionType) or is_ArcFunction(x):
         return list(filter(x, y))
     else:
         return x / y
@@ -202,3 +207,6 @@ ArcBuiltins = {'+': _add,
                'a': lambda L,x: L+[x],
                'i': lambda L,i,x: L[:i]+[x]+L[i:],
                'R': random.random,}
+
+def is_ArcFunction(func):
+    return repr(func.__class__) == "<class 'function.ArcFunction'>"

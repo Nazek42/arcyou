@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Arcyóu.  If not, see <http://www.gnu.org/licenses/>.
 
-from types import FunctionType
 from error import *
 from collections import Hashable
 from arcstdlib import ArcBuiltins, _index_slice, is_num
@@ -78,7 +77,7 @@ is that you won't get another cell.
 
     if not cons: # empty list?
         return None
-    
+
     # Is it a special form?
     #print("Hello from special form handler")
     func = cons[0]
