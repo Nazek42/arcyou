@@ -24,6 +24,8 @@ import sys
 import functools
 import time
 import operator
+import math
+import random
 
 class ArcFunction:
     """
@@ -305,7 +307,7 @@ ArcBuiltins = {'+': _add,
                '-': operator.sub,
                'pn': lambda *a: a[-1],
                'pg': lambda n, *a: a[n],
-               '‰': lambda x,y: x%y == 0,
+               '/?': lambda x,y: x%y == 0,
                '/': _virg,
                '#/': operator.floordiv,
                'r': functools.reduce,
@@ -336,7 +338,8 @@ ArcBuiltins = {'+': _add,
                'v': str.split,
                '\\': lambda s: s[::-1],
                'a': lambda L,x: L+[x],
-               'i': lambda L,i,x: L[:i]+[x]+L[i:],}
+               'i': lambda L,i,x: L[:i]+[x]+L[i:],
+               'R': random.random,}
             #    'add': lambda *a: _add,
             #    '-': lambda x,y: _sub,
             #    'sub': lambda x,y: _sub,
