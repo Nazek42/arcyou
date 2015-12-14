@@ -1,49 +1,62 @@
 # Arcyóu
-A LISP-like functional programming language suitable for code golf
+Arcyóu is a LISP-like functional programming language suitable for code golf. It has a large library of potentially useful functions, all one or two characters in length.
 
-#### Atoms
-An atom in Arcyóu is a *numeric literal* like `3.14`, a *string literal* like `"foobar"`, or a *variable reference* like `my-variable`.
+# Examples
 
-Literals evaluate to themselves. Variables evaluate to their value.
+Here are some real [PPCG](http://codegolf.stackexchange.com) puzzles which Arcyóu can solve in a small amount of bytes:
 
-*Note: string literals adjacent to other atoms __must__ be separated by spaces. Example:* `x "foobar" 2`, *not* `x"foobar"2`.
+["Hello, World!"](http://codegolf.stackexchange.com/questions/55422/):
 
-#### Cells
-A cell is a combination of one or more atoms in parentheses, like so:
+    "Hello, World!"  ; 15 bytes
 
-    (p "Hello, World!" 8 super-special-string)
+[Golf you a quine for great good!](http://codegolf.stackexchange.com/questions/69/):
 
-A cell can either be a *function call* or a *special form*. A special form is a cell where the first atom is one of the following:
+    Q  ; 1 byte?!
 
- - `?`
- - `@`
- - `f`
- - `:`
- - `F`
- - `'`
+[Implement a Truth-Machine](http://codegolf.stackexchange.com/questions/62732/):
 
-If the first atom is anything else, the cell is a function call.
+    (?(#(l))(@ 1(p 1))0  ; 19 bytes
 
-###### Function Calls
+[Is this number a prime?](http://codegolf.stackexchange.com/questions/57617/):
 
-Function calls are of the form `(func arg1 arg2 arg3 ...)`. Where most languages would have built-in operators for things like addition and subtraction, Arcyóu has built-in functions. For example:
+    (p?(#(l  ; 7 bytes
 
-    (+ 1 2) --> 3
-    (= 2 3) --> False
-    (_ 2 5) --> [2, 3, 4]
-    (* 5 4 3 2) --> 120
+[Output the current time](http://codegolf.stackexchange.com/questions/65020/):
 
-This means that you can redefine things like `+` or `_` to be *whatever you want*. Use this power wisely!
+    (@ t(pn(zz 1)(p(st %H:%M:%S  ; 27 bytes
 
-###### Special Forms
+# Motivation
 
-The other type of cell is a *special form*. These are things that are necessary in the language, but don't quite conform to the syntax rules of a function call. There are six special forms in Arcyóu.
+I would be lying if I didn't admit that I picked the Lisp syntax partially because of how easy it was to parse. But the idea behind Arcyóu is for it to be the Mathematica of golfing languages and have a builtin for everything, a feature which should easily offset the byte cost of parentheses.
 
-Atom | Meaning | Syntax | Example
------|---------|--------|--------
-`?`|If statement|`(? condition if-true if-false)`|`(? (= x 3) "x is 3" "x is not 3")`
-`@`|While loop|`(@ condition loop-body)`|`(@ (< x 6) (p (+ x 1)))`
-`f`|For loop|`(f variable iterable loop-body)`|`(f n my-list (p n))`
-`:`|Set variable|`(: symbol value)`|`(: my-number -7.2)`
-`F`|Anonymous function|`(F (arguments) (function-body))`|`(F (x y) (+ x y))`
-`'`|Quote|`(' anything)`|`(' 1 2 3 4)`
+# Executing code
+
+To run an Arcyóu program you find on the Web somewhere, save it to a file, then run `arc.py` in a Python 3.x interpreter with the file's name as a command-line argument. Example in a bash shell:
+
+    $ python3 arc.py myprogram.arc
+
+You can also run the interpreter without any arguments to start an interactive read-eval-print loop, or REPL, session. Here's an example session:
+
+    $ python3 arc.py
+    Arcyóu version v0.1a. Copyright (C) 2015 Benjamin Kulas.
+    This program comes with ABSOLUTELY NO WARRANTY; for details see the source code or the GNU General Public License version      3.
+
+    Type (bye) or press Ctrl-C to exit.
+    
+    (油:0)>(+ 1 2)
+    3
+    (油:1)>(p? 997)
+    False
+    (油:2)>(r * (' 1 2 3 4
+    24
+    (油:3)>(bye)
+    Bye.
+    $
+
+# Documentation
+
+The documentation is a work in progress, but what there is of it can be found on the wiki for [Arcyóu's GitHub repository](https://github.com/nazek42/arcyou).
+
+# Licensing
+
+Arcyóu is licensed under the GNU GPL version 3. The full text of the license can be found on the official GNU webpage at http://www.gnu.org/licenses/gpl-3.0.txt.
