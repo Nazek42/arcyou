@@ -60,7 +60,10 @@ def load(path):
             function.ArcEval(cons)
 
 def repl():
-    function.nsset([('bye', lambda: print("Bye."))])
+    def repl_exit():
+        print("Bye.", end='')
+        return ""
+    function.nsset([('bye', repl_exit)])
     if not have_readline:
         print("\nWARNING: GNU readline functionality may not be available.")
     try:
